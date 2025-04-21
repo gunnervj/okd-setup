@@ -1,0 +1,53 @@
+{
+  "ignition": { "version": "3.2.0" },
+  "systemd": {
+    "units": [
+    {
+      "name": "override-dns.service",
+      "enabled": true,
+      "contents": "[Unit]\nDescription=Override DNS to use custom resolver\nAfter=network-online.target systemd-resolved.service\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/systemctl restart systemd-resolved\n\n[Install]\nWantedBy=multi-user.target"
+    },
+      {
+        "name": "install-okd.service",
+        "enabled": true,
+        "contents": "[Unit]\nDescription=Install OKD Bootstrap\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/coreos-installer install /dev/vda --ignition-url=http://192.168.122.1:8080/worker.ign --insecure-ignition\nExecStartPost=/usr/bin/systemctl reboot\n\n[Install]\nWantedBy=multi-user.target"
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/etc/NetworkManager/system-connections/okd-enp1s0.nmconnection",
+        "mode": 384,
+        "overwrite": true,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,W2Nvbm5lY3Rpb25dCmlkPW9rZC1lbnAxczAKdHlwZT1ldGhlcm5ldAppbnRlcmZhY2UtbmFtZT1lbnAxczAKCltpcHY0XQptZXRob2Q9YXV0bwpkbnM9MTkyLjE2OC4xMjIuOTk7CmRucy1zZWFyY2g9bGFiLm9rZC5sb2NhbDsKCltpcHY2XQptZXRob2Q9aWdub3Jl"
+        }
+      },
+      {
+        "path": "/etc/systemd/resolved.conf.d/00-bootstrap-dns.conf",
+        "mode": 420,
+        "overwrite": true,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,W1Jlc29sdmVdCkROUz0xOTIuMTY4LjEyMi45OQpGYWxsYmFja0ROUz0KRG9tYWlucz1sYWIub2tkLmxvY2FsCg=="
+        }
+      },
+      {
+        "path": "/etc/resolv.conf",
+        "mode": 420,
+        "overwrite": true,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,bmFtZXNlcnZlciAxOTIuMTY4LjEyMi45OQo="
+        }
+      },
+      {
+        "path": "/etc/nsswitch.conf",
+        "mode": 420,
+        "overwrite": true,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,cGFzc3dkOiAgICAgICAgZmlsZXMgYWx0ZmlsZXMgc3NzIHN5c3RlbWQKc2hhZG93OiAgICAgICBmaWxlcwpncm91cDogICAgICAgIGZpbGVzIGFsdGZpbGVzIHNzcyBzeXN0ZW1kCmhvc3RzOiAgICAgICAgZmlsZXMgbXlob3N0bmFtZSByZXNvbHZlIGRucwpzZXJ2aWNlczogICAgIGZpbGVzIHNzcwpuZXRncm91cDogIGZpbGVzIHNzcwphdXRvbW91bnQ6ICBmaWxlcyBzc3MKYWxpYXNlczogICAgIGZpbGVzCmV0aGVyczogICAgICBmaWxlcwpnc2hhZG93OiAgICAgIGZpbGVzCm5ldHdvcmtzOiAgICAgZmlsZXMgZG5zCnByb3RvY29sczogICAgZmlsZXMKcHVibGlja2V5OiAgZmlsZXMKcnBjOiAgICAgICAgIGZpbGVzCg=="
+        }
+      }
+    ]
+  }
+}

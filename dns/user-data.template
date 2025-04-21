@@ -1,0 +1,121 @@
+#cloud-config
+hostname: dns-vm
+manage_etc_hosts: true
+users:
+  - name: ubuntu
+    ssh-authorized-keys:
+      - ${SSH_PUB_KEY}
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+
+package_update: true
+package_upgrade: false
+
+write_files:
+  - path: /etc/netplan/50-cloud-init.yaml
+    permissions: "0644"
+    content: |
+      network:
+        version: 2
+        ethernets:
+          enp1s0:
+            dhcp4: true
+            nameservers:
+              addresses: [127.0.0.1, 8.8.8.8]
+
+  - path: /etc/bind/zones.conf
+    permissions: "0644"
+    content: |
+      zone "lab.okd.local" {
+          type master;
+          file "/etc/bind/zones/db.okd.local";
+      };
+
+      zone "122.168.192.in-addr.arpa" {
+          type master;
+          file "/etc/bind/zones/db.192";
+      };
+
+  - path: /etc/bind/named.conf.local
+    permissions: "0644"
+    content: |
+      include "/etc/bind/zones.conf";
+
+  - path: /etc/bind/zones/db.okd.local
+    permissions: "0644"
+    content: |
+      $TTL    604800
+      @       IN      SOA     dns-vm.lab.okd.local. admin.lab.okd.local. (
+                              2025040701     ; Serial
+                              604800         ; Refresh
+                              86400         ; Retry
+                            2419200         ; Expire
+                              604800 )      ; Negative Cache TTL
+
+              IN      NS      dns-vm.lab.okd.local.
+
+      ; A Records
+      dns-vm                  IN A    192.168.122.99
+      okd-services            IN A    192.168.122.2
+      bootstrap               IN A    192.168.122.10
+      master-1                IN A    192.168.122.11
+      master-2                IN A    192.168.122.12
+      master-3                IN A    192.168.122.13
+      worker-1                IN A    192.168.122.21
+      worker-2                IN A    192.168.122.22
+      worker-3                IN A    192.168.122.23
+
+      ; Cluster endpoints via HAProxy
+      api                     IN A    192.168.122.2
+      api-int                 IN A    192.168.122.2
+      *.apps                  IN A    192.168.122.2
+
+      ; Internal apps (console, oauth) - routed via ingress
+      console-openshift-console.apps.lab.okd.local. IN A 192.168.122.2
+      oauth-openshift.apps.lab.okd.local.           IN A 192.168.122.2
+
+      ; etcd (only 1 node for now)
+      etcd-0.lab.okd.local.     IN A 192.168.122.11
+      etcd-1.lab.okd.local.     IN A 192.168.122.12
+      etcd-2.lab.okd.local.     IN A 192.168.122.13
+
+      ; SRV records for etcd
+      _etcd-server-ssl._tcp.lab.okd.local. 86400 IN SRV 0 10 2380 etcd-0.lab.okd.local.
+      _etcd-server-ssl._tcp.lab.okd.local. 86400 IN SRV 0 10 2380 etcd-1.lab.okd.local.
+      _etcd-server-ssl._tcp.lab.okd.local. 86400 IN SRV 0 10 2380 etcd-2.lab.okd.local.
+  - path: /etc/bind/zones/db.192
+    permissions: "0644"
+    content: |
+      ; /etc/bind/zones/db.192
+      $TTL    604800
+      @       IN      SOA     dns-vm.lab.okd.local. admin.lab.okd.local. (
+                                    2025040701     ; Serial
+                                    604800         ; Refresh
+                                    86400          ; Retry
+                                    2419200        ; Expire
+                                    604800 )       ; Negative Cache TTL
+
+      @       IN      NS      dns-vm.lab.okd.local.
+
+      $ORIGIN 122.168.192.in-addr.arpa.
+
+      2       IN      PTR     okd-services.lab.okd.local.
+      10      IN      PTR     bootstrap.lab.okd.local.
+      11      IN      PTR     master-1.lab.okd.local.
+      12      IN      PTR     master-2.lab.okd.local.
+      13      IN      PTR     master-3.lab.okd.local.
+      21      IN      PTR     worker-1.lab.okd.local.
+      22      IN      PTR     worker-2.lab.okd.local.
+      23      IN      PTR     worker-3.lab.okd.local.
+      99      IN      PTR     dns-vm.lab.okd.local.
+
+runcmd:
+  - netplan apply
+  - ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+  - [bash, -c, "for i in {1..5}; do apt-get update && break || sleep 5; done"]
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confold" bind9 bind9utils bind9-doc
+  - mkdir -p /etc/bind/zones
+  - systemctl enable bind9
+  - systemctl restart bind9
+  - sudo systemctl enable named
+  - sudo systemctl restart named

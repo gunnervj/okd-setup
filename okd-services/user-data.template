@@ -1,0 +1,113 @@
+#cloud-config
+hostname: okd-services
+fqdn: okd-services.lab.okd.local
+manage_etc_hosts: true
+
+users:
+  - name: ubuntu
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - ${SSH_PUB_KEY}
+package_update: true
+package_upgrade: false
+
+packages:
+  - haproxy
+
+write_files:
+  - path: /etc/netplan/50-cloud-init.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          enp1s0:
+            match:
+              macaddress: "52:54:00:00:00:02"
+            set-name: enp1s0
+            dhcp4: true
+            dhcp6: true
+            nameservers:
+              addresses: [192.168.122.99]
+              search: [lab.okd.local]
+  - path: /etc/resolv.conf
+    permissions: "0644"
+    content: |
+      nameserver 192.168.122.99
+  - path: /etc/haproxy/haproxy.cfg
+    permissions: "0644"
+    content: |
+      global
+          log /dev/log local0
+          log /dev/log local1 notice
+          maxconn 4096
+          daemon
+
+      defaults
+          mode tcp
+          log global
+          option tcplog
+          timeout connect 10s
+          timeout client  1m
+          timeout server  1m
+
+      # Frontend for OpenShift API
+      frontend api
+          bind *:6443
+          default_backend masters
+
+      # Frontend for Machine Config Server
+      frontend machineconfig
+          bind *:22623
+          default_backend masters-mcs
+
+      # Frontend for Ingress apps (HTTP)
+      frontend ingress-http
+          bind *:80
+          default_backend ingress-http
+
+      # Frontend for Ingress apps (HTTPS)
+      frontend ingress-https
+          bind *:443
+          default_backend ingress-https
+
+      # Backend for Kubernetes API
+      backend masters
+          option tcp-check
+          balance source
+          server bootstrap 192.168.122.10:22623 check
+          server master-1 192.168.122.11:6443 check
+          server master-2 192.168.122.12:6443 check
+          server master-3 192.168.122.13:6443 check
+
+      # Backend for Machine Config Server
+      backend masters-mcs
+          option tcp-check
+          balance source
+          server bootstrap 192.168.122.10:22623 check
+          server master-1 192.168.122.11:22623 check
+          server master-2 192.168.122.12:22623 check
+          server master-3 192.168.122.13:22623 check
+
+      # Backend for HTTP Ingress (apps)
+      backend ingress-http
+          option tcp-check
+          balance source
+          server worker-1 192.168.122.21:80 check
+          server worker-2 192.168.122.22:80 check
+          server worker-3 192.168.122.23:80 check
+
+      # Backend for HTTPS Ingress (apps)
+      backend ingress-https
+          option tcp-check
+          balance source
+          server worker-1 192.168.122.21:443 check
+          server worker-2 192.168.122.22:443 check
+          server worker-3 192.168.122.23:443 check
+
+runcmd:
+  - [bash, -c, "for i in {1..5}; do apt update && break || sleep 10; done"]
+  - sudo apt install -y haproxy
+  - sudo systemctl enable haproxy
+  - sudo systemctl restart haproxy

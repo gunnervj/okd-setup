@@ -1,0 +1,28 @@
+{
+  "ignition": { "version": "3.2.0" },
+  "systemd": {
+    "units": [
+              {
+        "name": "override-dns.service",
+        "enabled": true,
+        "contents": "[Unit]\nDescription=Override DNS to use custom resolver\nAfter=network.target\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/systemctl restart systemd-resolved\n\n[Install]\nWantedBy=multi-user.target"
+      },
+      {
+        "name": "install-okd.service",
+        "enabled": true,
+        "contents": "[Unit]\nDescription=Install OKD Bootstrap\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/coreos-installer install /dev/vda --ignition-url=http://192.168.122.1:8080/bootstrap.ign --insecure-ignition\nExecStartPost=/usr/bin/systemctl reboot\n\n[Install]\nWantedBy=multi-user.target"
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/etc/systemd/resolved.conf.d/00-master-dns.conf",
+        "mode": 420,
+        "contents": {
+          "source": "data:text/plain;charset=utf-8;base64,W1Jlc29sdmVdCkROUz0xOTIuMTY4LjEyMi45OQpGYWxsYmFja0ROUz0KRG9tYWlucz1va2QubG9jYWwKRE5TU3R1Ykxpc3RlbmVyPW5vCg=="
+        }
+      }
+    ]
+  }
+}
