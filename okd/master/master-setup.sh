@@ -8,7 +8,7 @@ DEST_IMAGES_DIR="/mnt/okd-storage/images"
 
 BASE_ISO="${DEST_IMAGES_DIR}/master.iso"
 MEMORY=26384
-VCPUS=4
+VCPUS=5
 DISK_SIZE=150G
 
 # MAC address template base

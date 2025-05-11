@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 IGNITION_DIR="/mnt/okd-storage/cluster"
 PORT=8080
 HOST_IP=$(hostname -I | awk '{print $1}')

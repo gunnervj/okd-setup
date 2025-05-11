@@ -1,0 +1,86 @@
+fullnameOverride: apps-db-ha
+
+global:
+  storageClass: nfs
+  compatibility:
+    openshift:
+      adaptSecurityContext: force
+
+postgresql:
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 10
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 10
+  username: postgres
+  database: postgres
+  repmgrUsername: repmgr
+  existingSecret: apps-db-secret
+  repmgrDatabase: repmgr
+  replicaCount: 2
+
+persistence:
+  enabled: true
+  storageClass: nfs
+  accessModes:
+    - ReadWriteOnce
+  size: 50Gi
+
+pgpool:
+  enabled: true
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  useLoadBalancing: true
+  replicaCount: 1
+  enablePoolHba: false
+  enablePoolPasswd: false
+  configuration: |-
+    enable_pool_hba = 'off'
+    allow_clear_text_frontend_auth = 'on'
+  allowClearTextPassword: true
+
+volumePermissions:
+  enabled: false
+
+serviceAccount:
+  create: true
+
+service:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.122.101
+  ports:
+    postgresql: 5432
+
+rbac:
+  create: true
+
+metrics:
+  enabled: false
+
+witness:
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 250m

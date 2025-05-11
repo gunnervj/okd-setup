@@ -15,7 +15,7 @@ if [[ -z "${OKD_PULL_SECRET:-}" ]]; then
   exit 1
 fi
 
-sudo rm -r "$CONFIG_DIR"
+sudo rm -rf "$CONFIG_DIR"
 echo "Deleted $CONFIG_DIR"
 sudo mkdir -p "$CONFIG_DIR"
 echo "Re-Created $CONFIG_DIR"

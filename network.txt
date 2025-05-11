@@ -1,0 +1,19 @@
+sudo netplan apply
+sudo virsh net-destroy default
+sudo virsh net-start default
+sudo ip route add default via 192.168.1.1 dev wlxcc641aee9588
+virsh detach-interface master-1-vm --type network --mac 52:54:00:00:00:11 --persistent
+virsh detach-interface master-2-vm --type network --mac 52:54:00:00:00:12 --persistent
+virsh detach-interface master-3-vm --type network --mac 52:54:00:00:00:13 --persistent
+virsh detach-interface worker-1-vm --type network --mac 52:54:00:00:00:21 --persistent
+virsh detach-interface worker-2-vm --type network --mac 52:54:00:00:00:22 --persistent
+virsh detach-interface worker-3-vm --type network --mac 52:54:00:00:00:23 --persistent
+
+
+virsh attach-interface --domain master-1-vm --type network --source default --model virtio --mac 52:54:00:00:00:11 --config --live
+virsh attach-interface --domain master-2-vm --type network --source default --model virtio --mac 52:54:00:00:00:12 --config --live
+virsh attach-interface --domain master-3-vm --type network --source default --model virtio --mac 52:54:00:00:00:13 --config --live
+virsh attach-interface --domain worker-1-vm --type network --source default --model virtio --mac 52:54:00:00:00:21 --config --live
+virsh attach-interface --domain worker-2-vm --type network --source default --model virtio --mac 52:54:00:00:00:22 --config --live
+virsh attach-interface --domain worker-3-vm --type network --source default --model virtio --mac 52:54:00:00:00:23 --config --live
+

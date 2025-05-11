@@ -1,0 +1,47 @@
+auth:
+  existingSecret: keycloak-admin-secret
+  passwordSecretKey: admin-password
+  adminUser: keycloak_admin
+
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: 192.168.122.101
+  port: 5432
+  user: keycloak
+  existingSecret: keycloak-db-secret
+  existingSecretPasswordKey: password
+  database: keycloak
+
+service:
+  type: ClusterIP
+
+serviceAccount:
+  create: false
+  name: keycloak-sa
+
+ingress:
+  enabled: true
+  ingressClassName: kong
+  annotations:
+    konghq.com/strip-path: "true"
+    konghq.com/protocols: "https"
+    konghq.com/snis: auth.blocksafe.home
+  pathType: Prefix
+  hostname: auth.blocksafe.home
+  tls: true
+  tlsSecret: auth-tls
+  extraTls:
+    - hosts:
+        - auth.blocksafe.home
+      secretName: auth-tls
+  path: /
+
+keycloakConfigCli:
+  enabled: false
+
+proxy: edge
+extraEnvVars:
+  - name: KC_PROXY
+    value: "edge"

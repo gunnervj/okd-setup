@@ -1,0 +1,38 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: kuma-scc
+allowAnyVolumeSources: true
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: true
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: true
+allowedCapabilities:
+  - NET_BIND_SERVICE
+  - NET_ADMIN
+  - NET_RAW
+defaultAddCapabilities: []
+fsGroup:
+  type: RunAsAny
+priority: null
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+  - KILL
+  - MKNOD
+  - SYS_CHROOT
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - "*"
+users:
+  - system:serviceaccount:kuma-system:kuma-control-plane
+  - system:serviceaccount:kuma-system:kuma-injector
+  - system:serviceaccount:kube-system:kuma-cni
+  - system:serviceaccount:kuma-system:default
