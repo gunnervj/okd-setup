@@ -59,3 +59,18 @@ oc apply -f kuma-ingress.yaml
 kubectl apply -f kuma-mtls.yaml
 kubectl apply -f kuma-trafficpermission.yaml
 ```
+
+### Kuma Side Car SCC
+
+To allow side car injection create below scc.
+
+```bash
+oc apply -f kuma-siedcar-scc.yaml
+oc adm policy add-scc-to-user kuma-sidecar-scc -z kuma-sidecar-injector -n kuma-system
+oc adm policy add-scc-to-user kuma-sidecar-scc -z kuma-control-plane -n kuma-system
+```
+
+kubectl -n kuma-system get secret auth-tls \
+-o jsonpath='{.data.tls\.crt}' | base64 -d > ca.crt
+kubectl -n kuma-system get secret auth-tls \
+-o jsonpath='{.data.tls\.crt}' > ca-bundle

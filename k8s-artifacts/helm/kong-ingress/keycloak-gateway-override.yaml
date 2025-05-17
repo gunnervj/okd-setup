@@ -1,0 +1,15 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongIngress
+metadata:
+  name: keycloak-gateway-override
+  namespace: identity
+proxy:
+  protocol: https
+  path: /
+route:
+  strip_path: true
+  protocols:
+    - https
+upstream:
+  tls:
+    verify: false

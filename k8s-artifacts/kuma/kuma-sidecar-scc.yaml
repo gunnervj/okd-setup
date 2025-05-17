@@ -1,0 +1,24 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: kuma-sidecar-scc
+allowPrivilegedContainer: false
+allowedCapabilities: []
+defaultAddCapabilities: []
+fsGroup:
+  type: RunAsAny
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - "*"
+seccompProfiles:
+  - "*"
+readOnlyRootFilesystem: false
+users:
+  - system:serviceaccount:identity:keycloak-sa
+  - system:serviceaccount:kuma-system:kuma-sidecar-injector
+  - system:serviceaccount:kuma-system:kuma-control-plane
