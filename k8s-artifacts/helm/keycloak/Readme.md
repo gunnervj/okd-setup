@@ -77,9 +77,25 @@ oc get pods -n identity -o jsonpath="{range .items[*]}{.metadata.name}{': '}{ran
 1. Create certificate by reuisng the cert form cert manager
 
 ```bash
-oc get secret auth-tls -n identity -o yaml \
-  | sed 's/name: auth-tls/name: auth-gateway-tls/' \
-  | oc apply -f -
+mkdir certs
+
+kubectl get secret auth-tls -n identity -o jsonpath='{.data.tls\.crt}' | base64 -d > certs\tls.crt
+kubectl get secret auth-tls -n identity -o jsonpath='{.data.tls\.key}' | base64 -d > cers\tls.key
+
+cat certs\tls.key certs\tls.crt > certs\tls-combined.pem
+
+kubectl create secret tls kuma-auth-tls \
+  --cert=tls.crt \
+  --key=tls.key \
+  -n identity
 ```
 
-2. Define the Kuma MeshGateway (HTTPS listener)
+2. Define the Kuma MeshGateway, routes and ingress.
+
+```bash
+oc apply -f mesh-traffic-permission.yaml
+oc apply -f keycloak-kuma-gateway.yaml
+oc apply -f keycloak-message-gatewayinstance.yaml
+oc apply -f keycloak-gateway-route.yaml
+oc apply -f keycloak-ingress.yaml
+```
