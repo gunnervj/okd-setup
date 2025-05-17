@@ -1,0 +1,22 @@
+apiVersion: kuma.io/v1alpha1
+kind: MeshGateway
+mesh: default
+metadata:
+  name: keycloak-gateway
+  namespace: identity
+spec:
+  podTemplate:
+    spec:
+      serviceAccountName: keycloak-sa
+  selectors:
+    - match:
+        kuma.io/service: keycloak-gateway-inst_identity_svc
+  conf:
+    listeners:
+      - port: 443
+        protocol: HTTPS
+        hostname: auth.blocksafe.home
+        tls:
+          mode: TERMINATE
+          certificates:
+            - secret: kuma-auth-tls

@@ -22,23 +22,6 @@ serviceAccount:
   name: keycloak-sa
 
 ingress:
-  enabled: true
-  ingressClassName: kong
-  annotations:
-    konghq.com/strip-path: "true"
-    konghq.com/protocols: "https"
-    konghq.com/snis: auth.blocksafe.home
-  pathType: Prefix
-  hostname: auth.blocksafe.home
-  tls: true
-  tlsSecret: auth-tls
-  extraTls:
-    - hosts:
-        - auth.blocksafe.home
-      secretName: auth-tls
-  path: /
-
-keycloakConfigCli:
   enabled: false
 
 proxy: edge

@@ -5,11 +5,11 @@ oc create namespace identity
 
 oc create secret generic keycloak-db-secret \
  --namespace identity \
- --from-literal=password='<PASSWORD>'
+ --from-literal=password='Aadumol1$'
 
 oc create secret generic keycloak-admin-secret \
  --namespace identity \
- --from-literal=admin-password='<PASSWORD>'
+ --from-literal=admin-password='Aadumol1$'
 ```
 
 # Create database and give necessary previleges
@@ -51,5 +51,35 @@ oc adm policy add-scc-to-user keycloak-scc -n identity -z keycloak-sa
 Run the helm for the keycloak installation
 
 ```bash
-helm install keycloak bitnami/keycloak -n keycloak -f values.yaml
+helm install keycloak bitnami/keycloak -n identity -f values.yaml
 ```
+
+# Sidecar Injection(Envoy) Kuma
+
+- Kuma uses sidecar injection to deploy an Envoy proxy alongside each pod
+- This proxy intercepts all inbound/outbound traffic
+- Labeling the namespace enables automatic injection for all pods in that namespace
+
+```bash
+oc adm policy add-scc-to-user kuma-sidecar-scc -z keycloak-sa -n identity
+oc label namespace identity kuma.io/sidecar-injection=enabled
+oc rollout restart statefulset keycloak -n identity
+```
+
+Verify by running below comman should give `keycloak-0: kuma-sidecar keycloak `
+
+```bash
+oc get pods -n identity -o jsonpath="{range .items[*]}{.metadata.name}{': '}{range .spec.containers[*]}{.name}{' '}{end}{'\n'}"
+```
+
+## Adding KumaGeway for mTLS to Keycloak
+
+1. Create certificate by reuisng the cert form cert manager
+
+```bash
+oc get secret auth-tls -n identity -o yaml \
+  | sed 's/name: auth-tls/name: auth-gateway-tls/' \
+  | oc apply -f -
+```
+
+2. Define the Kuma MeshGateway (HTTPS listener)

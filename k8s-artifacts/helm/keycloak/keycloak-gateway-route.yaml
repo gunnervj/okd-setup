@@ -1,0 +1,23 @@
+apiVersion: kuma.io/v1alpha1
+kind: MeshGatewayRoute
+mesh: default
+metadata:
+  name: keycloak-gateway-route
+  namespace: identity
+  labels:
+    kuma.io/mesh: default
+spec:
+  selectors:
+    - match:
+        kuma.io/service: keycloak-gateway-inst_identity_svc
+  conf:
+    http:
+      rules:
+        - matches:
+            - path:
+                match: PREFIX
+                value: /
+          backends:
+            - destination:
+                kuma.io/service: keycloak_identity_svc_80
+              weight: 100

@@ -3,11 +3,13 @@ kind: Certificate
 metadata:
   name: auth-cert
   namespace: identity
+  labels:
+    kuma.io/mesh: default
 spec:
   secretName: auth-tls
-  issuerRef:
-    name: selfsigned-cluster-issuer
-    kind: ClusterIssuer
   commonName: auth.blocksafe.home
   dnsNames:
     - auth.blocksafe.home
+  issuerRef:
+    name: selfsigned-cluster-issuer
+    kind: ClusterIssuer

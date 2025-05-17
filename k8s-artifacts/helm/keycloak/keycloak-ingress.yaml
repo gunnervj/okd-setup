@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak-kong-ingress
+  namespace: identity
+  annotations:
+    konghq.com/strip-path: "false"
+    konghq.com/protocols: https
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    konghq.com/https-verify: "false"
+spec:
+  ingressClassName: kong
+  rules:
+    - host: auth.blocksafe.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-gateway-inst
+                port:
+                  number: 443
+                protocol: https

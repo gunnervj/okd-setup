@@ -1,0 +1,18 @@
+apiVersion: kuma.io/v1alpha1
+kind: MeshGatewayInstance
+metadata:
+  name: keycloak-gateway-inst
+  namespace: identity
+  labels:
+    kuma.io/mesh: default
+  annotations:
+    konghq.com/protocol: "https"
+spec:
+  serviceType: ClusterIP
+  podTemplate:
+    spec:
+      serviceAccountName: keycloak-sa
+  serviceTemplate:
+    metadata:
+      labels:
+        kuma.io/service: keycloak-gateway-inst_identity_svc
